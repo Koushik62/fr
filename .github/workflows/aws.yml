@@ -34,35 +34,29 @@ jobs:
         run: |
           rsync -avz --exclude '.git*' ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
-          - name: Setup and Run Frontend
-          run: |
-            ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -s" << 'EOF'
-              set -e  # Exit immediately if a command exits with a non-zero status
-              cd ${{ secrets.DEPLOY_PATH }}
-        
-              echo "Setting up Node environment..."
-              # If you're using nvm, source it (adjust the path if needed)
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-              # Alternatively, you might source your profile if npm is set up there:
-              # source ~/.profile
-        
-              echo "Installing Node modules..."
-              npm install
-        
-              echo "Building Frontend..."
-              npm run build
-        
-              echo "Starting Frontend..."
-              nohup npm start > frontend.log 2>&1 &
-        
-              echo "Waiting for the frontend to start..."
-              sleep 5
-              if pgrep -f "npm start" > /dev/null; then
-                echo "Frontend started successfully."
-              else
-                echo "Failed to start frontend."
-                exit 1
-              fi
-            EOF
-        
+      - name: Setup and Run Frontend
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -s" << 'EOF'
+            set -e
+
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "Installing Node modules..."
+            npm install
+
+            echo "Building Frontend..."
+            npm run build
+
+            echo "Starting Frontend..."
+            nohup npm start > frontend.log 2>&1 &
+
+            echo "Waiting for the frontend to start..."
+            sleep 5
+
+            if pgrep -f "npm start" > /dev/null; then
+              echo "Frontend started successfully."
+            else
+              echo "Failed to start frontend."
+              exit 1
+            fi
+          EOF
