@@ -1,0 +1,20 @@
+.agent-settings {
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+  }
+  .setting-group {
+    margin-bottom: 20px;
+  }
+  .setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  .setting-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  

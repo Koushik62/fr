@@ -1,0 +1,28 @@
+.media-upload {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+  }
+  .media-controls,
+  .media-message,
+  .media-file {
+    margin-bottom: 15px;
+  }
+  .media-controls label,
+  .media-message label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  .media-controls select,
+  .media-message textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .media-message textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+  
