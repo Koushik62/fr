@@ -56,7 +56,7 @@ jobs:
       # Optionally sync files to the server (adjust exclude patterns as needed)
       - name: Deploy with rsync
         run: |
-          rsync -avz --exclude '.git*' --exclude 'node_modules' ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+          rsync -avz --exclude '.git*' ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
       - name: Setup and Run Frontend
         run: |
