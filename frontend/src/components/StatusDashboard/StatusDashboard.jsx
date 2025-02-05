@@ -2,7 +2,7 @@ import React from 'react';
 import './StatusDashboard.css';
 
 const StatusDashboard = () => {
-  const backendUrl = 'http://127.0.0.1:8888/'; // Replace with your backend URL
+  const backendUrl = 'http://3.29.236.151/'; // Replace with your backend URL
 
   const handleStart = async () => {
     try {
