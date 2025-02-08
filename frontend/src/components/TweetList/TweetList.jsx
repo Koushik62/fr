@@ -1,6 +1,6 @@
 // TweetTable.jsx
 import React, { useState, useEffect } from "react";
-import { AlertCircle, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import "./TweetList.css";
 import config from "../../config";
 import { CheckCircle } from "lucide-react"; // Replace with your preferred icon library
