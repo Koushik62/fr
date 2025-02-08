@@ -3,36 +3,30 @@ name: Deploy React App to AWS
 on:
   push:
     branches:
-      - main  # Adjust to your default branch
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout Code
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # Step 2: Set up Node.js environment
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: 20
 
-    # Step 3: Navigate to the React App Directory
-    - name: Set Working Directory
-      run: cd /home/ubuntu/fr/frontend # Update this with the correct path if `package.json` is not in the root
-
-    # Step 4: Install dependencies
+    # Remove the separate directory change step and use working-directory
     - name: Install Dependencies
+      working-directory: ./frontend  # Adjust this path based on your repo structure
       run: npm install
 
-    # Step 5: Build the React App
     - name: Build React App
+      working-directory: ./frontend  # Same path as above
       run: npm run build
 
-    # Step 6: Deploy to AWS EC2
     - name: Deploy to AWS EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -40,30 +34,49 @@ jobs:
         username: ${{ secrets.AWS_USERNAME }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
+          # Update and install dependencies
           sudo apt-get update -y
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
           sudo apt install -y nodejs
           sudo apt install -y npm
           sudo apt install -y nginx
 
-          rsync -avz --exclude='node_modules' ./ /home/ubuntu/react-app/
-          cd /home/ubuntu/react-app/
-          npm install
-          npm run build
-          sudo mkdir -p /var/www/vhosts/frontend/
-          sudo cp -R build/ /var/www/vhosts/frontend/
+          # Create directory if it doesn't exist
+          mkdir -p /home/ubuntu/fr/frontend
 
-          sudo rm -f /etc/nginx/sites-enabled/default
-          echo "server {
+          # Stop nginx to avoid any conflicts
+          sudo systemctl stop nginx
+
+          # Clear existing files if any
+          rm -rf /home/ubuntu/fr/frontend/*
+
+          # Create the target directory for the build
+          sudo mkdir -p /var/www/vhosts/frontend/build
+          
+          # Copy the build files
+          sudo cp -R /home/ubuntu/fr/frontend/build/* /var/www/vhosts/frontend/build/
+
+          # Configure nginx
+          sudo tee /etc/nginx/sites-available/react << EOF
+          server {
               listen 80 default_server;
               server_name _;
+              root /var/www/vhosts/frontend/build;
+              index index.html;
+              
               location / {
-                  autoindex on;
-                  root /var/www/vhosts/frontend/build;
-                  try_files \$uri /index.html;
+                  try_files \$uri \$uri/ /index.html;
               }
-          }" | sudo tee /etc/nginx/sites-available/react
+          }
+          EOF
+
+          # Enable the site and remove default
+          sudo rm -f /etc/nginx/sites-enabled/default
           sudo ln -sf /etc/nginx/sites-available/react /etc/nginx/sites-enabled/
-          sudo gpasswd -a www-data ubuntu
+
+          # Set proper permissions
+          sudo chown -R www-data:www-data /var/www/vhosts/frontend
+          sudo chmod -R 755 /var/www/vhosts/frontend
+
+          # Restart nginx
           sudo systemctl restart nginx
-          sudo service nginx restart
