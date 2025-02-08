@@ -5,16 +5,18 @@ import "./StatusDashboard.css";
 import config from "../../config";
 
 const StatusDashboard = () => {
-  const [tweets, setTweets] = useState([]);
+  // const [tweets, setTweets] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [metrics, setMetrics] = useState({ fetched: 0, replied: 0, responses: 0 });
   const [statusMessage, setStatusMessage] = useState(""); // State for feedback messages
 
+  // Helper function to format date as YYYY-MM-DD
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
 
-  const fetchTweets = async (date) => {
+  // Fetch tweets and calculate metrics
+  const fetchTweets = React.useCallback(async (date) => {
     const formattedDate = formatDate(date);
 
     try {
@@ -22,32 +24,36 @@ const StatusDashboard = () => {
       if (!response.ok) throw new Error("Failed to fetch tweets");
       const data = await response.json();
 
+      // Filter tweets by selected date
       const filteredTweets = data.filter((tweet) =>
         tweet.timestamp.includes(formattedDate)
       );
 
+      // Count tweets and count those with a status of "replied"
       const fetched = filteredTweets.length;
-      const replied = filteredTweets.filter((tweet) => tweet.replyStatus === "yes").length;
+      const replied = filteredTweets.filter((tweet) => tweet.status === "replied").length;
       const responses = fetched - replied;
 
       setMetrics({ fetched, replied, responses });
-      setTweets(filteredTweets);
+      // setTweets(filteredTweets);
     } catch (err) {
       console.error(err.message);
     }
-  };
+  }, []);
 
+  // Update tweets whenever the selected date changes
   useEffect(() => {
     fetchTweets(selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, fetchTweets]);
 
+  // Handler to start the agent
   const handleStart = async () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/start`, { method: "GET" });
       const data = await response.json();
 
       if (response.ok) {
-        setStatusMessage("Agent started successfully!"); // Display success message
+        setStatusMessage("Agent started successfully!");
       } else {
         setStatusMessage(`Failed to start agent: ${data.message}`);
       }
@@ -57,13 +63,14 @@ const StatusDashboard = () => {
     }
   };
 
+  // Handler to stop the agent
   const handleStop = async () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/stop`, { method: "GET" });
       const data = await response.json();
 
       if (response.ok) {
-        setStatusMessage("Agent stopped successfully!"); // Display success message
+        setStatusMessage("Agent stopped successfully!");
       } else {
         setStatusMessage(`Failed to stop agent: ${data.message}`);
       }
@@ -87,7 +94,7 @@ const StatusDashboard = () => {
         />
       </div>
       <p className="description">
-        Below is the Daily Status of the Agent based on the Metrics including Tweets Fetched, Tweets Replied, Replies Sent to people's comments
+        Below is the Daily Status of the Agent based on the Metrics including Tweets Fetched, Tweets Replied, Replies Sent to people's comments.
       </p>
       <div className="metrics">
         <div className="metric-item">
