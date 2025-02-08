@@ -18,14 +18,26 @@ jobs:
       with:
         node-version: 20
 
-    # Remove the separate directory change step and use working-directory
     - name: Install Dependencies
-      working-directory: ./frontend  # Adjust this path based on your repo structure
+      working-directory: ./frontend
       run: npm install
 
     - name: Build React App
-      working-directory: ./frontend  # Same path as above
+      working-directory: ./frontend
       run: npm run build
+
+    # Add SSH key setup for rsync
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.AWS_HOST }} >> ~/.ssh/known_hosts
+
+    # Transfer build files to EC2
+    - name: Transfer build files to EC2
+      run: |
+        rsync -avz --delete ./frontend/build/ ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }}:/home/ubuntu/fr/frontend/build/
 
     - name: Deploy to AWS EC2
       uses: appleboy/ssh-action@v0.1.8
@@ -47,13 +59,10 @@ jobs:
           # Stop nginx to avoid any conflicts
           sudo systemctl stop nginx
 
-          # Clear existing files if any
-          rm -rf /home/ubuntu/fr/frontend/*
-
           # Create the target directory for the build
           sudo mkdir -p /var/www/vhosts/frontend/build
-          
-          # Copy the build files
+
+          # Copy the build files from our synced directory to nginx directory
           sudo cp -R /home/ubuntu/fr/frontend/build/* /var/www/vhosts/frontend/build/
 
           # Configure nginx
