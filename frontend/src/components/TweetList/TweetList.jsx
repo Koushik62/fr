@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { AlertCircle, ExternalLink } from "lucide-react";
 import "./TweetList.css";
 import config from "../../config";
+import { CheckCircle } from "lucide-react"; // Replace with your preferred icon library
+
 
 const TweetList= () => {
   const [tweets, setTweets] = useState([]);
@@ -43,7 +45,7 @@ const TweetList= () => {
     try {
       await Promise.all(
         selectedTweets.map(id =>
-          fetch(`${process.env.REACT_APP_API_URL}/tweets/${id}`, {
+          fetch(`${config.API_BASE_URL}/tweets/${id}`, {
             method: 'DELETE'
           })
         )
@@ -99,15 +101,36 @@ const TweetList= () => {
           <tr>
             <th>Account Type</th>
             <th>Tweet URL</th>
-            <th>Tweet Views</th>
-            <th>Number of Tags</th>
+          
+            <th>Username</th>
+            <th>Followers</th>
             <th>Select</th>
           </tr>
         </thead>
         <tbody>
           {tweets.map((tweet) => (
             <tr key={tweet.id}>
-              <td>{tweet.verified || 'Unknown'}</td>
+            
+                <td>
+                  {tweet.verified === "Blue" && (
+                    <>
+                      Blue <CheckCircle color="#1DA1F2" size={16} />
+                    </>
+                  )}
+                  {tweet.verified === "Yellow" && (
+                    <>
+                      Yellow <CheckCircle color="gold" size={16} />
+                    </>
+                  )}
+                  {tweet.verified === "Grey" && (
+                    <>
+                      Grey <CheckCircle color="gray" size={16} />
+                    </>
+                  )}
+                  {!tweet.verified && <>Unknown ❓</>}
+                </td>
+
+
               <td>
                 <a 
                   href={`https://twitter.com/${tweet.username}/status/${tweet.tweet_id}`} 
@@ -117,8 +140,8 @@ const TweetList= () => {
                   <ExternalLink size={16} /> View Tweet
                 </a>
               </td>
-              <td>{(tweet.views || 0).toLocaleString()}</td>
-              <td>{tweet.tags?.length || 0}</td>
+              <td>{(tweet.username)}</td>
+              <td>{tweet.followers}</td>
               <td>
                 <input
                   type="checkbox"

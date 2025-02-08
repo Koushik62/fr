@@ -1,52 +1,3 @@
-// import React from 'react';
-// import './StatusDashboard.css';
-
-// const StatusDashboard = () => {
-//   const backendUrl = 'http://3.29.236.151/'; // Replace with your backend URL
-
-//   const handleStart = async () => {
-//     try {
-//       const response = await fetch(`${backendUrl}/start`, { method: 'GET' });
-//       const data = await response.json();
-//       console.log('Start response:', data);
-//       // Handle the response as needed
-//     } catch (error) {
-//       console.error('Error starting the agent:', error);
-//     }
-//   };
-
-//   const handleStop = async () => {
-//     try {
-//       const response = await fetch(`${backendUrl}/stop`, { method: 'GET' });
-//       const data = await response.json();
-//       console.log('Stop response:', data);
-//       // Handle the response as needed
-//     } catch (error) {
-//       console.error('Error stopping the agent:', error);
-//     }
-//   };
-
-//   return (
-//     <div className="status-dashboard">
-//       <h2>AI Agent Status</h2>
-//       <div className="status-item">Status: Tweets fetched…</div>
-//       <div className="status-item">Status: Tweet #XXX replied…</div>
-//       <div className="status-item">Status: Waiting for responses…</div>
-//       <div className="status-item">Status: People responses sent…</div>
-//       <div className="status-item">
-//         Replies Quota: <span>25 done / 75 remaining</span>
-//       </div>
-//       <div className="controls">
-//         <button className="run-btn" onClick={handleStart}>Run Agent</button>
-//         <button className="stop-btn" onClick={handleStop}>Stop Agent</button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default StatusDashboard;
-
-
 import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -57,9 +8,8 @@ const StatusDashboard = () => {
   const [tweets, setTweets] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [metrics, setMetrics] = useState({ fetched: 0, replied: 0, responses: 0 });
-  
+  const [statusMessage, setStatusMessage] = useState(""); // State for feedback messages
 
-  // Format date to match backend expected format (e.g., "YYYY-MM-DD")
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
@@ -95,9 +45,15 @@ const StatusDashboard = () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/start`, { method: "GET" });
       const data = await response.json();
-      console.log("Start response:", data);
+
+      if (response.ok) {
+        setStatusMessage("Agent started successfully!"); // Display success message
+      } else {
+        setStatusMessage(`Failed to start agent: ${data.message}`);
+      }
     } catch (error) {
       console.error("Error starting the agent:", error);
+      setStatusMessage("An error occurred while starting the agent.");
     }
   };
 
@@ -105,9 +61,15 @@ const StatusDashboard = () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/stop`, { method: "GET" });
       const data = await response.json();
-      console.log("Stop response:", data);
+
+      if (response.ok) {
+        setStatusMessage("Agent stopped successfully!"); // Display success message
+      } else {
+        setStatusMessage(`Failed to stop agent: ${data.message}`);
+      }
     } catch (error) {
       console.error("Error stopping the agent:", error);
+      setStatusMessage("An error occurred while stopping the agent.");
     }
   };
 
@@ -141,6 +103,11 @@ const StatusDashboard = () => {
           <p>People Responses</p>
         </div>
       </div>
+      {statusMessage && (
+        <div className="status-message">
+          <p>{statusMessage}</p>
+        </div>
+      )}
       <div className="controls">
         <button className="start-btn" onClick={handleStart}>Start Agent</button>
         <button className="stop-btn" onClick={handleStop}>Stop Agent</button>

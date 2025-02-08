@@ -1,62 +1,76 @@
-name: Deploy Frontend
+name: Deploy React App to AWS
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches:
+      - main  # Adjust to your default branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    # Step 1: Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_HOST }}
-          name: id_rsa
+    # Step 2: Set up Node.js environment
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
 
-      - name: Set SSH key permissions
-        run: chmod 600 ~/.ssh/id_rsa
+    # Step 3: Install dependencies
+    - name: Install Dependencies
+      run: npm install
 
-      - name: Add Known Hosts
-        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+    # Step 4: Build the React App
+    - name: Build React App
+      run: npm run build
 
-      - name: Deploy with rsync
-        run: |
-          rsync -avz --exclude '.git*' ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+    # Step 5: Deploy to AWS EC2
+    - name: Deploy to AWS EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.AWS_HOST }}        # AWS EC2 public IP or domain
+        username: ${{ secrets.AWS_USERNAME }} # Username (e.g., ubuntu)
+        key: ${{ secrets.AWS_PRIVATE_KEY }}   # Private key for SSH
+        script: |
+          # Update system packages
+          sudo apt-get update -y
+          
+          # Install Node.js, npm, and Nginx
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt install -y nodejs
+          sudo apt install -y npm
+          sudo apt install -y nginx
 
-      - name: Setup and Run Frontend
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -s" << 'EOF'
-            set -e
+          # Sync project files to EC2
+          rsync -avz --exclude='node_modules' ./ /home/ubuntu/react-app/
 
-            cd ${{ secrets.DEPLOY_PATH }}
+          # Build React app
+          cd /home/ubuntu/react-app/
+          npm install
+          npm run build
 
-            echo "Installing Node modules..."
-            npm install
+          # Copy build to Nginx directory
+          sudo mkdir -p /var/www/vhosts/frontend/
+          sudo cp -R build/ /var/www/vhosts/frontend/
 
-            echo "Building Frontend..."
-            npm run build
-
-            echo "Starting Frontend..."
-            nohup npm start > frontend.log 2>&1 &
-
-            echo "Waiting for the frontend to start..."
-            sleep 5
-
-            if pgrep -f "npm start" > /dev/null; then
-              echo "Frontend started successfully."
-            else
-              echo "Failed to start frontend."
-              exit 1
-            fi
-          EOF
+          # Configure Nginx
+          sudo rm -f /etc/nginx/sites-enabled/default
+          echo "server {
+              listen 80 default_server;
+              server_name _;
+              location / {
+                  autoindex on;
+                  root /var/www/vhosts/frontend/build;
+                  try_files \$uri /index.html;
+              }
+          }" | sudo tee /etc/nginx/sites-available/react
+          sudo ln -sf /etc/nginx/sites-available/react /etc/nginx/sites-enabled/
+          
+          # Restart Nginx
+          sudo gpasswd -a www-data ubuntu
+          sudo systemctl restart nginx
+          sudo service nginx restart
