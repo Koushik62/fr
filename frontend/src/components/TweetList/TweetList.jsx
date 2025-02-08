@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, ExternalLink } from 'lucide-react';
+// TweetTable.jsx
+import React, { useState, useEffect } from "react";
+import { AlertCircle, ExternalLink } from "lucide-react";
+import "./TweetList.css";
+import config from "../../config";
 
-const TweetTable = () => {
+const TweetList= () => {
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTweets, setSelectedTweets] = useState([]);
+  const [sortBy, setSortBy] = useState("timestamp");
 
   useEffect(() => {
     fetchTweets();
@@ -12,9 +17,10 @@ const TweetTable = () => {
 
   const fetchTweets = async () => {
     try {
-      const response = await fetch('http://http://3.29.236.151//tweets');
-      if (!response.ok) throw new Error('Failed to fetch tweets');
+      const response = await fetch(`${config.API_BASE_URL}/tweets`);
+      if (!response.ok) throw new Error("Failed to fetch tweets");
       const data = await response.json();
+      console.log(data);
       setTweets(data);
     } catch (err) {
       setError(err.message);
@@ -23,108 +29,115 @@ const TweetTable = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
-      </div>
+  const handleSelectTweet = (tweetId) => {
+    setSelectedTweets(prev => 
+      prev.includes(tweetId) 
+        ? prev.filter(id => id !== tweetId)
+        : [...prev, tweetId]
     );
-  }
+  };
 
-  if (error) {
-    return (
-      <div className="m-4 p-4 bg-red-100 text-red-700 border border-red-400 rounded-lg flex items-center gap-2">
-        <AlertCircle className="h-5 w-5 text-red-600" />
-        <span>{error}</span>
-      </div>
-    );
-  }
+  const handleDeleteSelected = async () => {
+    if (!window.confirm("Delete selected tweets?")) return;
+    
+    try {
+      await Promise.all(
+        selectedTweets.map(id =>
+          fetch(`${process.env.REACT_APP_API_URL}/tweets/${id}`, {
+            method: 'DELETE'
+          })
+        )
+      );
+      setTweets(prev => prev.filter(tweet => !selectedTweets.includes(tweet.id)));
+      setSelectedTweets([]);
+    } catch (err) {
+      console.error("Failed to delete tweets:", err);
+    }
+  };
+
+  const sortTweets = (type) => {
+    setSortBy(type);
+    const sorted = [...tweets].sort((a, b) => {
+      switch(type) {
+        case 'views':
+          return b.views - a.views;
+        case 'tags':
+          return b.tags.length - a.tags.length;
+        default:
+          return new Date(b.timestamp) - new Date(a.timestamp);
+      }
+    });
+    setTweets(sorted);
+  };
+
+  if (loading) return <div className="loading">Loading tweets...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-6 border-b">
-        <h2 className="text-2xl font-bold text-gray-800">Twitter Activity Log</h2>
-        <p className="text-sm text-gray-500 mt-1">{tweets.length} tweets found</p>
+    <div className="tweets-container">
+      <h1>Tweets</h1>
+      <p className="subtitle">
+        List of tweets from Different Types of Accounts, Tweet Views and
+        Tags Found inside each Tweet
+      </p>
+
+      <div className="table-controls">
+        <select 
+          className="sort-by"
+          onChange={(e) => sortTweets(e.target.value)}
+          value={sortBy}
+        >
+          <option value="timestamp">Sort By</option>
+          <option value="views">Views</option>
+          <option value="tags">Tags</option>
+          <option value="timestamp">Date</option>
+        </select>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Content</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Username</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Followers</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Engagement</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Interactions</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Reach</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Details</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider border-b">Posted</th>
+      <table className="tweets-table">
+        <thead>
+          <tr>
+            <th>Account Type</th>
+            <th>Tweet URL</th>
+            <th>Tweet Views</th>
+            <th>Number of Tags</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tweets.map((tweet) => (
+            <tr key={tweet.id}>
+              <td>{tweet.verified || 'Unknown'}</td>
+              <td>
+                <a 
+                  href={`https://twitter.com/${tweet.username}/status/${tweet.tweet_id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink size={16} /> View Tweet
+                </a>
+              </td>
+              <td>{(tweet.views || 0).toLocaleString()}</td>
+              <td>{tweet.tags?.length || 0}</td>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedTweets.includes(tweet.id)}
+                  onChange={() => handleSelectTweet(tweet.id)}
+                />
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {tweets.map((tweet) => (
-              <tr key={tweet.log_id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="max-w-lg pr-4 text-gray-900 line-clamp-2">
-                    {tweet.content}
-                    {tweet.url && (
-                      <a href={tweet.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center ml-1 text-blue-500 hover:text-blue-600">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-blue-600 hover:text-blue-700">@{tweet.author_info?.username || 'anonymous'}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="font-medium">{tweet.author_info?.followers?.toLocaleString() || 0}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-1">
-                    <span>❤️</span>
-                    <span className="font-medium">{tweet.engagement_metrics?.likes?.toLocaleString() || 0}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-1">
-                    <span>🔄</span>
-                    <span className="font-medium">{tweet.engagement_metrics?.retweets?.toLocaleString() || 0}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-1">
-                    <span>💬</span>
-                    <span className="font-medium">{tweet.engagement_metrics?.replies?.toLocaleString() || 0}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1 text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs uppercase">Source:</span>
-                      <span>{tweet.metadata?.source_device || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs uppercase">Media:</span>
-                      <span>{tweet.metadata?.media_count || 0}</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-500">
-                  {new Date(tweet.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
+      
+      {selectedTweets.length > 0 && (
+        <button className="delete-selected" onClick={handleDeleteSelected}>
+          Delete Selected
+        </button>
+      )}
     </div>
   );
 };
 
-export default TweetTable;
+export default TweetList;

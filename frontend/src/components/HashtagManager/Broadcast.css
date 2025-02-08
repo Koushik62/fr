@@ -1,0 +1,103 @@
+.dynamic-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.content-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.parameters {
+  background: #f5f5f5;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.parameters ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.hashtags-section {
+  margin-bottom: 2rem;
+}
+
+.hashtag-group {
+  margin-bottom: 1rem;
+}
+
+.hashtag-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.personality-sections {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.personality-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.personality-group textarea {
+  width: 100%;
+  height: 150px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.update-btn {
+  background-color: #ff6347;
+  color: white;
+}
+
+.broadcast-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 2rem;
+}
+
+.broadcast-btn {
+  padding: 1rem;
+  background-color: #ddd;
+  color: #666;
+}
+
+.broadcast-btn.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.broadcast-btn:first-child {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Add loading state */
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
