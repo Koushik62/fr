@@ -1,11 +1,11 @@
 import React from 'react';
-import DashboardPage from './pages/DashboardPage';
 import './App.css';
+import SignupPage from './pages/signup';
 
 function App() {
   return (
     <div className="app-container">
-      <DashboardPage />
+      <SignupPage />
     </div>
   );
 }
