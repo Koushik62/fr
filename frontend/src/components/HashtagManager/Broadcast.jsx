@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import './Broadcast.css';
 import config from '../../config';
+const characters = [
+  'sui', 'grum', 'stomp', 'blaze', 'brocco', 'yeti', 'nubb', 'nom',
+  'cyclo', 'glint', 'fluff', 'captainboo', 'momo', 'slippy', 'whirl', 'twispy','pico','tuga', 'kai', 'ruk', 'pyro', 'grow', 'luna', 'floar','ecron'
+];
+
 
 const Broadcast = () => {
   const [requiredTags, setRequiredTags] = useState(['SUI', 'SuiGaming', 'Gaming']);
   const [optionalTags, setOptionalTags] = useState(['Blockchain']);
-  const [tweetPersonality, setTweetPersonality] = useState('');
+  const [tweetPersonality, setTweetPersonality] = useState(characters[0]);
   const [dynamicSentences, setDynamicSentences] = useState(['', '', '']);
   const [commentPersonality, setCommentPersonality] = useState('');
   const [selectedMedia, setSelectedMedia] = useState('images');
   const [loading, setLoading] = useState(false);
 
+  
   // Function to update hashtags
   const updateHashtags = async () => {
     setLoading(true);
@@ -30,7 +36,6 @@ const Broadcast = () => {
     }
   };
 
-  // Separate functions to update personality settings
   const updateTweetPersonality = async () => {
     setLoading(true);
     try {
@@ -47,6 +52,7 @@ const Broadcast = () => {
       setLoading(false);
     }
   };
+
 
   const updateCommentPersonality = async () => {
     setLoading(true);
@@ -145,16 +151,20 @@ const Broadcast = () => {
 
           {/* Personality Sections */}
           <div className="personality-sections">
-            <div className="personality-group">
-              <textarea
-                value={tweetPersonality}
-                onChange={(e) => setTweetPersonality(e.target.value)}
-                placeholder="Agent Personality for Tweet Replies"
-              />
-              <button onClick={updateTweetPersonality} disabled={loading}>
-                {loading ? 'Updating...' : 'Update Personality for Replying to Tweets'}
-              </button>
-            </div>
+          <div className="personality-group">
+          <label>Agent Personality for Tweet Replies:</label>
+          <select
+            value={tweetPersonality}
+            onChange={(e) => setTweetPersonality(e.target.value)}
+          >
+            {characters.map((character, index) => (
+              <option key={index} value={character}>{character}</option>
+            ))}
+          </select>
+          <button onClick={updateTweetPersonality} disabled={loading}>
+            {loading ? 'Updating...' : 'Update Personality for Replying to Tweets'}
+          </button>
+        </div>
 
             <div className="personality-group">
             <textarea

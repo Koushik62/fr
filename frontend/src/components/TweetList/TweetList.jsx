@@ -1,6 +1,6 @@
 // TweetTable.jsx
 import React, { useState, useEffect } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink , Trash2} from "lucide-react";
 import "./TweetList.css";
 import config from "../../config";
 import { CheckCircle } from "lucide-react"; // Replace with your preferred icon library
@@ -11,7 +11,7 @@ const TweetList= () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTweets, setSelectedTweets] = useState([]);
-  const [sortBy, setSortBy] = useState("timestamp");
+  
 
   useEffect(() => {
     fetchTweets();
@@ -32,45 +32,34 @@ const TweetList= () => {
   };
 
   const handleSelectTweet = (tweetId) => {
-    setSelectedTweets(prev => 
-      prev.includes(tweetId) 
-        ? prev.filter(id => id !== tweetId)
+    setSelectedTweets((prev) =>
+      prev.includes(tweetId)
+        ? prev.filter((id) => id !== tweetId)
         : [...prev, tweetId]
     );
   };
+  
 
   const handleDeleteSelected = async () => {
     if (!window.confirm("Delete selected tweets?")) return;
-    
-    try {
-      await Promise.all(
-        selectedTweets.map(id =>
-          fetch(`${config.API_BASE_URL}/tweets/${id}`, {
-            method: 'DELETE'
-          })
-        )
-      );
-      setTweets(prev => prev.filter(tweet => !selectedTweets.includes(tweet.id)));
-      setSelectedTweets([]);
-    } catch (err) {
-      console.error("Failed to delete tweets:", err);
-    }
-  };
 
-  const sortTweets = (type) => {
-    setSortBy(type);
-    const sorted = [...tweets].sort((a, b) => {
-      switch(type) {
-        case 'views':
-          return b.views - a.views;
-        case 'tags':
-          return b.tags.length - a.tags.length;
-        default:
-          return new Date(b.timestamp) - new Date(a.timestamp);
-      }
-    });
-    setTweets(sorted);
-  };
+    try {
+        await Promise.all(
+            selectedTweets.map(log_id =>  // Use log_id instead of tweet_id
+                fetch(`${config.API_BASE_URL}/tweets/${log_id}`, {
+                    method: 'DELETE'
+                })
+            )
+        );
+        setTweets(prev => prev.filter(tweet => !selectedTweets.includes(tweet.log_id)));
+        setSelectedTweets([]);
+    } catch (err) {
+        console.error("Failed to delete tweets:", err);
+    }
+};
+
+
+
 
   if (loading) return <div className="loading">Loading tweets...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -83,53 +72,38 @@ const TweetList= () => {
         Tags Found inside each Tweet
       </p>
 
-      <div className="table-controls">
-        <select 
-          className="sort-by"
-          onChange={(e) => sortTweets(e.target.value)}
-          value={sortBy}
-        >
-          <option value="timestamp">Sort By</option>
-          <option value="views">Views</option>
-          <option value="tags">Tags</option>
-          <option value="timestamp">Date</option>
-        </select>
-      </div>
-
       <table className="tweets-table">
         <thead>
           <tr>
             <th>Account Type</th>
             <th>Tweet URL</th>
-          
             <th>Username</th>
             <th>Followers</th>
+            <th>Status</th>
             <th>Select</th>
           </tr>
         </thead>
         <tbody>
           {tweets.map((tweet) => (
             <tr key={tweet.id}>
-            
-                <td>
-                  {tweet.verified === "Blue" && (
-                    <>
-                      Blue <CheckCircle color="#1DA1F2" size={16} />
-                    </>
-                  )}
-                  {tweet.verified === "Yellow" && (
-                    <>
-                      Yellow <CheckCircle color="gold" size={16} />
-                    </>
-                  )}
-                  {tweet.verified === "Grey" && (
-                    <>
-                      Grey <CheckCircle color="gray" size={16} />
-                    </>
-                  )}
-                  {!tweet.verified && <>Unknown ❓</>}
-                </td>
-
+              <td>
+                {tweet.verified === "Blue" && (
+                  <>
+                    Blue <CheckCircle color="#1DA1F2" size={16} />
+                  </>
+                )}
+                {tweet.verified === "Yellow" && (
+                  <>
+                    Yellow <CheckCircle color="gold" size={16} />
+                  </>
+                )}
+                {tweet.verified === "Grey" && (
+                  <>
+                    Grey <CheckCircle color="gray" size={16} />
+                  </>
+                )}
+                {!tweet.verified && <>Unknown ❓</>}
+              </td>
 
               <td>
                 <a 
@@ -139,16 +113,40 @@ const TweetList= () => {
                 >
                   <ExternalLink size={16} /> View Tweet
                 </a>
+                
               </td>
-              <td>{(tweet.username)}</td>
+              <td>{tweet.username}</td>
               <td>{tweet.followers}</td>
               <td>
-                <input
-                  type="checkbox"
-                  checked={selectedTweets.includes(tweet.id)}
-                  onChange={() => handleSelectTweet(tweet.id)}
-                />
-              </td>
+  {tweet.status === "replied" && tweet.reply_id && (
+    <a
+      href={`https://twitter.com/SuimonAgent/status/${tweet.reply_id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ marginLeft: "10px" }}
+    >
+      <ExternalLink size={16} /> View Reply
+    </a>
+  )}
+</td>
+
+              <td>
+  <input
+    type="checkbox"
+    checked={selectedTweets.includes(tweet.tweet_id)}
+    onChange={() => handleSelectTweet(tweet.tweet_id)}
+  />
+  {selectedTweets.includes(tweet.tweet_id) && (
+    <button
+      className="delete-icon"
+      title="Delete Tweet"
+      onClick={() => handleDeleteSelected(tweet.tweet_id)}
+    >
+      <Trash2 size={16} color="red" />
+    </button>
+  )}
+</td>
+
             </tr>
           ))}
         </tbody>
