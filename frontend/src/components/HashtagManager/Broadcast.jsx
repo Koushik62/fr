@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Broadcast.css';
 import config from '../../config';
 
@@ -11,17 +11,76 @@ const Broadcast = () => {
   const [requiredTags, setRequiredTags] = useState([]);
   const [optionalTags, setOptionalTags] = useState([]);
   const [tweetPersonality, setTweetPersonality] = useState('');
+  const [characterDescription, setCharacterDescription] = useState('');
   const [dynamicSentences, setDynamicSentences] = useState('');
   const [commentPersonality, setCommentPersonality] = useState('');
   const [selectedMedia, setSelectedMedia] = useState('images');
   const [loading, setLoading] = useState(false);
 
-  // Fetch data on component mount
+
   useEffect(() => {
-    fetchData();
+    const fetchMediaType = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/get-media-type`);
+        if (response.ok) {
+          const data = await response.json();
+          setSelectedMedia(data.mediaType);
+        }
+      } catch (error) {
+        console.error('Error fetching media type:', error);
+      }
+    };
+
+    fetchMediaType();
   }, []);
 
-  const fetchData = async () => {
+  const handleBroadcast = async (type) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaType: type }),
+      });
+
+      if (!response.ok) throw new Error('Broadcast failed');
+      console.log(await response.json());
+      setSelectedMedia(type);
+    } catch (error) {
+      console.error('Broadcast error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+
+
+
+  // Fetch character description when personality changes
+  useEffect(() => {
+    if (tweetPersonality) {
+      fetchCharacterDescription(tweetPersonality);
+    }
+  }, [tweetPersonality]);
+
+  const fetchCharacterDescription = async (character) => {
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/characterdescription/${character}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCharacterDescription(data.description || '');
+      } else {
+        console.error('Failed to fetch character description');
+        setCharacterDescription('');
+      }
+    } catch (error) {
+      console.error('Error fetching character description:', error);
+      setCharacterDescription('');
+    }
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch hashtags
@@ -33,25 +92,29 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch hashtags');
       }
-
+  
       // Fetch tweet personality
       const tweetPersonalityResponse = await fetch(`${config.API_BASE_URL}/replypersonality`);
       if (tweetPersonalityResponse.ok) {
         const tweetPersonalityData = await tweetPersonalityResponse.json();
         setTweetPersonality(tweetPersonalityData.content || '');
+        // Fetch description for initial personality
+        if (tweetPersonalityData.content) {
+          await fetchCharacterDescription(tweetPersonalityData.content);
+        }
       } else {
         console.error('Failed to fetch tweet personality');
       }
-    
-       // Fetch dynamic sentences
-       const dynamicSentencesResponse = await fetch(`${config.API_BASE_URL}/dynamicpersonality`);
-       if (dynamicSentencesResponse.ok) {
-         const dynamicSentencesData = await dynamicSentencesResponse.json();
-         setDynamicSentences(dynamicSentencesData.content || []); // Assuming the API returns an array
-       } else {
-         console.error('Failed to fetch dynamic sentences');
-       }
-
+  
+      // Fetch dynamic sentences
+      const dynamicSentencesResponse = await fetch(`${config.API_BASE_URL}/dynamicpersonality`);
+      if (dynamicSentencesResponse.ok) {
+        const dynamicSentencesData = await dynamicSentencesResponse.json();
+        setDynamicSentences(dynamicSentencesData.content || []);
+      } else {
+        console.error('Failed to fetch dynamic sentences');
+      }
+  
       // Fetch comment personality
       const commentPersonalityResponse = await fetch(`${config.API_BASE_URL}/commentpersonality`);
       if (commentPersonalityResponse.ok) {
@@ -60,22 +123,26 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch comment personality');
       }
-
+  
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // ✅ Ensures fetchData doesn't change on every render
+  
+  // Fetch data once on component mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // ✅ No infinite loop
 
-  // Function to update hashtags
   const updateHashtags = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${config.API_BASE_URL}/update-hashtags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requiredTags, optionalTags }) // Send as an array
+        body: JSON.stringify({ requiredTags, optionalTags })
       });
       if (!response.ok) throw new Error('Failed to update hashtags');
       console.log(await response.json());
@@ -86,23 +153,59 @@ const Broadcast = () => {
     }
   };
 
+  // const updateTweetPersonality = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetch(`${config.API_BASE_URL}/character-description`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ 
+  //         content: tweetPersonality,
+  //         description: characterDescription 
+  //       })
+  //     });
+  //     if (!response.ok) throw new Error('Failed to update tweet personality');
+  //     console.log(await response.json());
+  //   } catch (error) {
+  //     console.error('Error updating tweet personality:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const updateTweetPersonality = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${config.API_BASE_URL}/updatereplypersonality`, {
+      const tweetResponse = await fetch(`${config.API_BASE_URL}/updatereplypersonality`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: tweetPersonality })
+        body: JSON.stringify({ content: tweetPersonality }),
       });
-      if (!response.ok) throw new Error('Failed to update tweet personality');
-      console.log(await response.json());
+  
+      const characterResponse = await fetch(`${config.API_BASE_URL}/characterdescription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: tweetPersonality,
+          description: characterDescription 
+        }),
+      });
+  
+      if (!tweetResponse.ok || !characterResponse.ok) {
+        throw new Error('Failed to update tweet personality or character description');
+      }
+  
+      console.log(await tweetResponse.json());
+      console.log(await characterResponse.json());
     } catch (error) {
       console.error('Error updating tweet personality:', error);
     } finally {
       setLoading(false);
     }
   };
+  
 
+  // Rest of the existing functions remain the same...
   const updateCommentPersonality = async () => {
     setLoading(true);
     try {
@@ -137,24 +240,23 @@ const Broadcast = () => {
     }
   };
 
-  // Broadcast function
-  const handleBroadcast = async (type) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${config.API_BASE_URL}/broadcast`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaType: type })
-      });
-      if (!response.ok) throw new Error('Broadcast failed');
-      console.log(await response.json());
-      setSelectedMedia(type);
-    } catch (error) {
-      console.error('Broadcast error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleBroadcast = async (type) => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetch(`${config.API_BASE_URL}/broadcast`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ mediaType: type })
+  //     });
+  //     if (!response.ok) throw new Error('Broadcast failed');
+  //     console.log(await response.json());
+  //     setSelectedMedia(type);
+  //   } catch (error) {
+  //     console.error('Broadcast error:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="dynamic-content">
@@ -177,9 +279,9 @@ const Broadcast = () => {
               <h3>HashTags that Must be Present</h3>
               <input
                 type="text"
-                value={requiredTags.join(', ')} // Display as comma-separated
+                value={requiredTags.join(', ')}
                 onChange={(e) => setRequiredTags(
-                  e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
+                  e.target.value.split(',').map(tag => tag.trim())
                 )}
               />
             </div>
@@ -189,7 +291,7 @@ const Broadcast = () => {
                 type="text"
                 value={optionalTags.join(', ')}
                 onChange={(e) => setOptionalTags(
-                  e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
+                  e.target.value.split(',').map(tag => tag.trim())
                 )}
               />
             </div>
@@ -210,6 +312,12 @@ const Broadcast = () => {
                   <option key={index} value={character}>{character}</option>
                 ))}
               </select>
+              <textarea
+                value={characterDescription}
+                onChange={(e) => setCharacterDescription(e.target.value)}
+                placeholder="Enter character description..."
+                className="character-description"
+              />
               <button onClick={updateTweetPersonality} disabled={loading}>
                 {loading ? 'Updating...' : 'Update Personality for Replying to Tweets'}
               </button>
@@ -217,10 +325,10 @@ const Broadcast = () => {
 
             <div className="personality-group">
               <textarea
-                 value={dynamicSentences} // Bind value directly
-                 onChange={(e) => setDynamicSentences(e.target.value)}
-                 placeholder="3 Dynamic Sentences Response"
-               />
+                value={dynamicSentences}
+                onChange={(e) => setDynamicSentences(e.target.value)}
+                placeholder="3 Dynamic Sentences Response"
+              />
               <button onClick={updateDynamicSentences} disabled={loading}>
                 {loading ? 'Updating...' : 'Update 3 Sentences Dynamic Response'}
               </button>
@@ -245,28 +353,17 @@ const Broadcast = () => {
             <p>Select one of the buttons below to broadcast either an image, a video, or an audio podcast.</p>
           </div>
           <div className="broadcast-buttons">
-            <button
-              className={`broadcast-btn ${selectedMedia === 'images' ? 'active' : ''}`}
-              onClick={() => handleBroadcast('images')}
-              disabled={loading}
-            >
-              {loading ? 'Broadcasting...' : 'Broadcast Images'}
-            </button>
-            <button
-              className={`broadcast-btn ${selectedMedia === 'videos' ? 'active' : ''}`}
-              onClick={() => handleBroadcast('videos')}
-              disabled={loading}
-            >
-              {loading ? 'Broadcasting...' : 'Broadcast Videos'}
-            </button>
-            <button
-              className={`broadcast-btn ${selectedMedia === 'audios' ? 'active' : ''}`}
-              onClick={() => handleBroadcast('audios')}
-              disabled={loading}
-            >
-              {loading ? 'Broadcasting...' : 'Broadcast Audios'}
-            </button>
-          </div>
+      {['images', 'videos', 'audios'].map((type) => (
+        <button
+          key={type}
+          className={`broadcast-btn ${selectedMedia === type ? 'active green' : ''}`}
+          onClick={() => handleBroadcast(type)}
+          disabled={loading}
+        >
+          {loading ? 'Broadcasting...' : `Broadcast ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+        </button>
+      ))}
+    </div>
         </div>
       </div>
     </div>
