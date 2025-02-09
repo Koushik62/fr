@@ -91,10 +91,11 @@ button {
   color: white;
 }
 
-.broadcast-btn:first-child {
+/* Removed the style that made the first button always green */
+/* .broadcast-btn:first-child {
   background-color: #4CAF50;
   color: white;
-}
+} */
 
 /* Add loading state */
 button:disabled {

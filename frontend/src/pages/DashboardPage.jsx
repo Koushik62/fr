@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import StatusDashboard from '../components/StatusDashboard/StatusDashboard';
 import TweetList from '../components/TweetList/TweetList';
 import Broadcast from '../components/HashtagManager/Broadcast';
-import MediaUpload from '../components/MediaUpload/MediaUpload';
+import LogsViewer from '../components/MediaUpload/LogsViewer';
 import AgentSettings from '../components/AgentSettings/AgentSettings';
 import './DashboardPage.css';
 
@@ -60,7 +60,7 @@ const DashboardPage = () => {
               <h2>Media Upload</h2>
             </header>
             <div className="content-body">
-              <MediaUpload />
+              <LogsViewer/>
             </div>
           </section>
         );
@@ -101,11 +101,9 @@ const DashboardPage = () => {
               <button onClick={() => handleNavigation('hashtags')}>Hashtags</button>
             </li>
             <li className={activeSection === 'media' ? 'active' : ''}>
-              <button onClick={() => handleNavigation('media')}>Media Upload</button>
+              <button onClick={() => handleNavigation('media')}>Logs</button>
             </li>
-            <li className={activeSection === 'settings' ? 'active' : ''}>
-              <button onClick={() => handleNavigation('settings')}>Agent Settings</button>
-            </li>
+            
           </ul>
         </nav>
       </aside>

@@ -1,22 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Broadcast.css';
 import config from '../../config';
+
 const characters = [
   'sui', 'grum', 'stomp', 'blaze', 'brocco', 'yeti', 'nubb', 'nom',
   'cyclo', 'glint', 'fluff', 'captainboo', 'momo', 'slippy', 'whirl', 'twispy','pico','tuga', 'kai', 'ruk', 'pyro', 'grow', 'luna', 'floar','ecron'
 ];
 
-
 const Broadcast = () => {
-  const [requiredTags, setRequiredTags] = useState(['SUI', 'SuiGaming', 'Gaming']);
-  const [optionalTags, setOptionalTags] = useState(['Blockchain']);
-  const [tweetPersonality, setTweetPersonality] = useState(characters[0]);
-  const [dynamicSentences, setDynamicSentences] = useState(['', '', '']);
+  const [requiredTags, setRequiredTags] = useState([]);
+  const [optionalTags, setOptionalTags] = useState([]);
+  const [tweetPersonality, setTweetPersonality] = useState('');
+  const [dynamicSentences, setDynamicSentences] = useState('');
   const [commentPersonality, setCommentPersonality] = useState('');
   const [selectedMedia, setSelectedMedia] = useState('images');
   const [loading, setLoading] = useState(false);
 
-  
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch hashtags
+      const hashtagsResponse = await fetch(`${config.API_BASE_URL}/hashtags`);
+      if (hashtagsResponse.ok) {
+        const hashtagsData = await hashtagsResponse.json();
+        setRequiredTags(hashtagsData.requiredTags || []);
+        setOptionalTags(hashtagsData.optionalTags || []);
+      } else {
+        console.error('Failed to fetch hashtags');
+      }
+
+      // Fetch tweet personality
+      const tweetPersonalityResponse = await fetch(`${config.API_BASE_URL}/replypersonality`);
+      if (tweetPersonalityResponse.ok) {
+        const tweetPersonalityData = await tweetPersonalityResponse.json();
+        setTweetPersonality(tweetPersonalityData.content || '');
+      } else {
+        console.error('Failed to fetch tweet personality');
+      }
+    
+       // Fetch dynamic sentences
+       const dynamicSentencesResponse = await fetch(`${config.API_BASE_URL}/dynamicpersonality`);
+       if (dynamicSentencesResponse.ok) {
+         const dynamicSentencesData = await dynamicSentencesResponse.json();
+         setDynamicSentences(dynamicSentencesData.content || []); // Assuming the API returns an array
+       } else {
+         console.error('Failed to fetch dynamic sentences');
+       }
+
+      // Fetch comment personality
+      const commentPersonalityResponse = await fetch(`${config.API_BASE_URL}/commentpersonality`);
+      if (commentPersonalityResponse.ok) {
+        const commentPersonalityData = await commentPersonalityResponse.json();
+        setCommentPersonality(commentPersonalityData.content || '');
+      } else {
+        console.error('Failed to fetch comment personality');
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to update hashtags
   const updateHashtags = async () => {
     setLoading(true);
@@ -25,7 +76,6 @@ const Broadcast = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requiredTags, optionalTags }) // Send as an array
-
       });
       if (!response.ok) throw new Error('Failed to update hashtags');
       console.log(await response.json());
@@ -53,7 +103,6 @@ const Broadcast = () => {
     }
   };
 
-
   const updateCommentPersonality = async () => {
     setLoading(true);
     try {
@@ -77,7 +126,7 @@ const Broadcast = () => {
       const response = await fetch(`${config.API_BASE_URL}/updatedynamicpersonality`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: dynamicSentences }) 
+        body: JSON.stringify({ content: dynamicSentences })
       });
       if (!response.ok) throw new Error('Failed to update dynamic sentences');
       console.log(await response.json());
@@ -127,22 +176,22 @@ const Broadcast = () => {
             <div className="hashtag-group">
               <h3>HashTags that Must be Present</h3>
               <input
-  type="text"
-  value={requiredTags.join(', ')} // Display as comma-separated
-  onChange={(e) => setRequiredTags(
-    e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
-  )}
-/>
+                type="text"
+                value={requiredTags.join(', ')} // Display as comma-separated
+                onChange={(e) => setRequiredTags(
+                  e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
+                )}
+              />
             </div>
             <div className="hashtag-group">
               <h3>HashTags that are Optional</h3>
               <input
-  type="text"
-  value={optionalTags.join(', ')}
-  onChange={(e) => setOptionalTags(
-    e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
-  )}
-/>
+                type="text"
+                value={optionalTags.join(', ')}
+                onChange={(e) => setOptionalTags(
+                  e.target.value.split(',').map(tag => tag.trim()) // Trim spaces
+                )}
+              />
             </div>
             <button className="update-btn" onClick={updateHashtags} disabled={loading}>
               {loading ? 'Updating...' : 'Update HashTags'}
@@ -151,28 +200,27 @@ const Broadcast = () => {
 
           {/* Personality Sections */}
           <div className="personality-sections">
-          <div className="personality-group">
-          <label>Agent Personality for Tweet Replies:</label>
-          <select
-            value={tweetPersonality}
-            onChange={(e) => setTweetPersonality(e.target.value)}
-          >
-            {characters.map((character, index) => (
-              <option key={index} value={character}>{character}</option>
-            ))}
-          </select>
-          <button onClick={updateTweetPersonality} disabled={loading}>
-            {loading ? 'Updating...' : 'Update Personality for Replying to Tweets'}
-          </button>
-        </div>
+            <div className="personality-group">
+              <label>Agent Personality for Tweet Replies:</label>
+              <select
+                value={tweetPersonality}
+                onChange={(e) => setTweetPersonality(e.target.value)}
+              >
+                {characters.map((character, index) => (
+                  <option key={index} value={character}>{character}</option>
+                ))}
+              </select>
+              <button onClick={updateTweetPersonality} disabled={loading}>
+                {loading ? 'Updating...' : 'Update Personality for Replying to Tweets'}
+              </button>
+            </div>
 
             <div className="personality-group">
-            <textarea
-              value={dynamicSentences} // Keep it as a single string
-              onChange={(e) => setDynamicSentences(e.target.value)} // No splitting
-              placeholder="3 Dynamic Sentences Response"
-            />
-
+              <textarea
+                 value={dynamicSentences} // Bind value directly
+                 onChange={(e) => setDynamicSentences(e.target.value)}
+                 placeholder="3 Dynamic Sentences Response"
+               />
               <button onClick={updateDynamicSentences} disabled={loading}>
                 {loading ? 'Updating...' : 'Update 3 Sentences Dynamic Response'}
               </button>

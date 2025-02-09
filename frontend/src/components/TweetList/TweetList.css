@@ -1,68 +1,60 @@
-/* TweetTable.css */
 .tweets-container {
-  padding: 2rem;
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 h1 {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  text-align: center;
   color: #666;
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
 }
 
-.table-controls {
+/* Sorting Controls */
+.sorting-controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.sort-dropdown select {
-  padding: 0.5rem;
-  border-radius: 4px;
+.sort-select {
+  padding: 8px 12px;
   border: 1px solid #ddd;
-}
-
-.delete-selected {
-  background-color: #ff4757;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
   border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
   cursor: pointer;
+  min-width: 150px;
 }
 
-.delete-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-left: 8px;
-  vertical-align: middle;
-}
-.delete-icon:hover {
-  opacity: 0.7;
+.sort-select:hover {
+  border-color: #bbb;
 }
 
+.sort-select:focus {
+  outline: none;
+  border-color: #0095ff;
+  box-shadow: 0 0 0 2px rgba(0, 149, 255, 0.1);
+}
 
+/* Table Styles */
 .tweets-table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 20px;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .tweets-table th,
 .tweets-table td {
-  padding: 1rem;
+  padding: 12px;
+  border: 1px solid #eee;
   text-align: left;
-  border-bottom: 1px solid #eee;
 }
 
 .tweets-table th {
@@ -74,33 +66,114 @@ h1 {
   background-color: #f8f9fa;
 }
 
+/* Status Labels */
+.not-replied {
+  color: #dc3545;
+  font-size: 0.9em;
+}
+
+/* Links */
 .tweets-table a {
-  color: #007bff;
+  color: #0095ff;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .tweets-table a:hover {
   text-decoration: underline;
 }
 
-.loading {
+/* Delete Button */
+.delete-selected {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-selected:hover {
+  background-color: #c82333;
+}
+
+.delete-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 8px;
+  opacity: 0.8;
+}
+
+.delete-icon:hover {
+  opacity: 1;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.pagination-button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.pagination-button.active {
+  background-color: #e6e6e6;
+  font-weight: 500;
+}
+
+.pagination-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  color: #666;
+  padding: 0 4px;
+}
+
+/* Loading and Error States */
+.loading,
+.error {
   text-align: center;
-  padding: 2rem;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
 }
 
 .error {
-  color: #ff4757;
-  text-align: center;
-  padding: 2rem;
+  color: #dc3545;
 }
 
-@media (max-width: 768px) {
-  .tweets-container {
-    padding: 1rem;
-  }
-  
-  .tweets-table {
-    display: block;
-    overflow-x: auto;
-  }
+/* Checkbox Styles */
+.tweets-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
