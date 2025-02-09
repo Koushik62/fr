@@ -43,7 +43,7 @@ const StatusDashboard = () => {
   useEffect(() => {
     fetchTweets(selectedDate);
     fetchStatus(); // Ensure status is fetched on page load
-  }, [selectedDate, fetchStatus]);
+  }, [selectedDate, fetchStatus, fetchTweets]);
   
 
   const handleStart = async () => {

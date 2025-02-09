@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ExternalLink, Trash2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import "./TweetList.css";
 import config from "../../config";
@@ -20,32 +20,7 @@ const TweetList = () => {
     fetchTweets();
   }, []);
 
-  useEffect(() => {
-    if (sortField) {
-      handleSort();
-    }
-  }, [sortField, sortOrder]);
-
-  const fetchTweets = async () => {
-    setLoading(true);
-    try {
-      // Option A: Server-side pagination (if your API supports it)
-      // const response = await fetch(`${config.API_BASE_URL}/tweets?page=${currentPage}&limit=${tweetsPerPage}`);
-      
-      // Option B: Fetch all tweets at once (client-side pagination)
-      const response = await fetch(`${config.API_BASE_URL}/tweets`);
-      if (!response.ok) throw new Error("Failed to fetch tweets");
-      const data = await response.json();
-      setTweets(data);
-      console.log(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSort = () => {
+  const handleSort = useCallback(() => {
     const sortedTweets = [...tweets].sort((a, b) => {
       switch (sortField) {
         case 'accountType': {
@@ -78,7 +53,33 @@ const TweetList = () => {
       }
     });
     setTweets(sortedTweets);
+  }, [tweets, sortField, sortOrder]);
+  useEffect(() => {
+    if (sortField) {
+      handleSort();
+    }
+  }, [sortField, sortOrder, handleSort]);
+
+  const fetchTweets = async () => {
+    setLoading(true);
+    try {
+      // Option A: Server-side pagination (if your API supports it)
+      // const response = await fetch(`${config.API_BASE_URL}/tweets?page=${currentPage}&limit=${tweetsPerPage}`);
+      
+      // Option B: Fetch all tweets at once (client-side pagination)
+      const response = await fetch(`${config.API_BASE_URL}/tweets`);
+      if (!response.ok) throw new Error("Failed to fetch tweets");
+      const data = await response.json();
+      setTweets(data);
+      console.log(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+
 
   const handleSelectTweet = (tweetId) => {
     setSelectedTweets((prev) =>
