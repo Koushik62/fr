@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Broadcast.css';
 import config from '../../config';
 
@@ -69,9 +69,7 @@ const handleBroadcast = async (type) => {
   
 
   // Fetch data on component mount
-  useEffect(() => {
-    fetchData();
-  }, []);
+
 
   // Fetch character description when personality changes
   useEffect(() => {
@@ -96,7 +94,9 @@ const handleBroadcast = async (type) => {
     }
   };
 
-  const fetchData = async () => {
+
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch hashtags
@@ -108,7 +108,7 @@ const handleBroadcast = async (type) => {
       } else {
         console.error('Failed to fetch hashtags');
       }
-
+  
       // Fetch tweet personality
       const tweetPersonalityResponse = await fetch(`${config.API_BASE_URL}/replypersonality`);
       if (tweetPersonalityResponse.ok) {
@@ -130,7 +130,7 @@ const handleBroadcast = async (type) => {
       } else {
         console.error('Failed to fetch dynamic sentences');
       }
-
+  
       // Fetch comment personality
       const commentPersonalityResponse = await fetch(`${config.API_BASE_URL}/commentpersonality`);
       if (commentPersonalityResponse.ok) {
@@ -139,14 +139,18 @@ const handleBroadcast = async (type) => {
       } else {
         console.error('Failed to fetch comment personality');
       }
-
+  
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
-
+  }, []); // Empty dependency array ensures fetchData is only created once
+  
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Now we can safely include fetchData
+  
   const updateHashtags = async () => {
     setLoading(true);
     try {
