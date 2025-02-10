@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Broadcast.css';
 import config from '../../config';
 
@@ -18,44 +18,60 @@ const Broadcast = () => {
   const [loading, setLoading] = useState(false);
 
 
-  useEffect(() => {
-    const fetchMediaType = async () => {
-      try {
-        const response = await fetch(`${config.API_BASE_URL}/get-media-type`);
-        if (response.ok) {
-          const data = await response.json();
-          setSelectedMedia(data.mediaType);
-        }
-      } catch (error) {
-        console.error('Error fetching media type:', error);
-      }
-    };
 
-    fetchMediaType();
-  }, []);
-
-  const handleBroadcast = async (type) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${config.API_BASE_URL}/broadcast`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaType: type }),
-      });
-
-      if (!response.ok) throw new Error('Broadcast failed');
-      console.log(await response.json());
-      setSelectedMedia(type);
-    } catch (error) {
-      console.error('Broadcast error:', error);
-    } finally {
-      setLoading(false);
+const fetchMediaType = async () => {
+  try {
+    const response = await fetch(`${config.API_BASE_URL}/get-media-type`);
+    if (response.ok) {
+      const data = await response.json();
+      setSelectedMedia(data.mediaType);
+      localStorage.setItem('selectedMedia', data.mediaType); // ✅ Save to localStorage
     }
-  };
+  } catch (error) {
+    console.error('Error fetching media type:', error);
+  }
+};
+
+// Fetch stored media type on mount
+useEffect(() => {
+  const storedMedia = localStorage.getItem('selectedMedia');
+  if (storedMedia) {
+    setSelectedMedia(storedMedia);
+  } else {
+    fetchMediaType();
+  }
+}, []);
+
+const handleBroadcast = async (type) => {
+  setLoading(true);
+  try {
+    const response = await fetch(`${config.API_BASE_URL}/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mediaType: type }),
+    });
+
+    if (!response.ok) throw new Error('Broadcast failed');
+
+    const data = await response.json();
+    console.log(data);
+
+    setSelectedMedia(type);
+    localStorage.setItem('selectedMedia', type); // ✅ Save selection
+  } catch (error) {
+    console.error('Broadcast error:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   
 
-
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // Fetch character description when personality changes
   useEffect(() => {
@@ -80,7 +96,7 @@ const Broadcast = () => {
     }
   };
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       // Fetch hashtags
@@ -92,7 +108,7 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch hashtags');
       }
-  
+
       // Fetch tweet personality
       const tweetPersonalityResponse = await fetch(`${config.API_BASE_URL}/replypersonality`);
       if (tweetPersonalityResponse.ok) {
@@ -105,7 +121,7 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch tweet personality');
       }
-  
+    
       // Fetch dynamic sentences
       const dynamicSentencesResponse = await fetch(`${config.API_BASE_URL}/dynamicpersonality`);
       if (dynamicSentencesResponse.ok) {
@@ -114,7 +130,7 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch dynamic sentences');
       }
-  
+
       // Fetch comment personality
       const commentPersonalityResponse = await fetch(`${config.API_BASE_URL}/commentpersonality`);
       if (commentPersonalityResponse.ok) {
@@ -123,18 +139,13 @@ const Broadcast = () => {
       } else {
         console.error('Failed to fetch comment personality');
       }
-  
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }, []); // ✅ Ensures fetchData doesn't change on every render
-  
-  // Fetch data once on component mount
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]); // ✅ No infinite loop
+  };
 
   const updateHashtags = async () => {
     setLoading(true);

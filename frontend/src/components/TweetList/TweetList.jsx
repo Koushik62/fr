@@ -93,8 +93,8 @@ const TweetList = () => {
     if (!window.confirm("Delete selected tweets?")) return;
     try {
       await Promise.all(
-        selectedTweets.map((log_id) =>
-          fetch(`${config.API_BASE_URL}/tweets/${log_id}`, {
+        selectedTweets.map((tweet_id) =>
+          fetch(`${config.API_BASE_URL}/tweets/${tweet_id}`, {
             method: "DELETE",
           })
         )

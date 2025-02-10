@@ -9,10 +9,9 @@ const StatusDashboard = () => {
   const [metrics, setMetrics] = useState({ fetched: 0, replied: 0, responses: 0 });
   const [statusMessage, setStatusMessage] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [delay, setDelay] = useState("");
 
   const formatDate = (date) => date.toISOString().split("T")[0];
-
-
 
   const fetchTweets = useCallback(async (date) => {
     const formattedDate = formatDate(date);
@@ -32,23 +31,38 @@ const StatusDashboard = () => {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/status`);
-      const data = await response.json();
-      setIsRunning(data.status === "running"); // Ensure it reflects the actual running state
+      const [statusResponse, delayResponse] = await Promise.all([
+        fetch(`${config.API_BASE_URL}/status`),
+        fetch(`${config.API_BASE_URL}/get-delay`)
+      ]);
+  
+      const statusData = await statusResponse.json();
+      const delayData = await delayResponse.json();
+  
+      if (statusResponse.ok) {
+        setIsRunning(statusData.status === "running");
+      }
+  
+      if (delayResponse.ok) {
+        setDelay(delayData.delay.toString());  // Convert to string for input field
+      }
     } catch (error) {
-      console.error("Error fetching status:", error);
+      console.error("Error fetching status or delay:", error);
     }
   }, []);
   
   useEffect(() => {
     fetchTweets(selectedDate);
-    fetchStatus(); // Ensure status is fetched on page load
+    fetchStatus();
   }, [selectedDate, fetchStatus, fetchTweets]);
-  
 
   const handleStart = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/start`, { method: "GET" });
+      const response = await fetch(`${config.API_BASE_URL}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delay: parseInt(delay, 10) || 0 })
+      });
       const data = await response.json();
       if (response.ok) {
         setStatusMessage("Agent started successfully!");
@@ -78,6 +92,28 @@ const StatusDashboard = () => {
     }
   };
 
+  const handleUpdateDelay = async () => {
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/update-delay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delay: parseInt(delay, 10) || 0 })
+      });
+  
+      const data = await response.json();
+      console.log("Response Data:", data); // Debugging log
+  
+      if (response.ok) {
+        setStatusMessage("Delay updated successfully!");
+      } else {
+        setStatusMessage(`Failed to update delay: ${data.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error updating delay:", error);
+      setStatusMessage("An error occurred while updating the delay.");
+    }
+  };
+  
   return (
     <div className="status-dashboard">
       <h2 className="title">SuiMon Agent Status</h2>
@@ -98,6 +134,16 @@ const StatusDashboard = () => {
         <div className="metric-item"><h3>{metrics.fetched}</h3><p>Tweets Fetched</p></div>
         <div className="metric-item"><h3>{metrics.replied}</h3><p>Tweets Replied</p></div>
         <div className="metric-item"><h3>{metrics.responses}</h3><p>People Responses</p></div>
+      </div>
+      <div className="time-input-container">
+        <input
+          type="number"
+          placeholder="Enter time in seconds"
+          value={delay}
+          onChange={(e) => setDelay(e.target.value)}
+          className="delay-input"
+        />
+        <button className="update-btn" onClick={handleUpdateDelay}>Update Delay</button>
       </div>
       {statusMessage && <div className="status-message"><p>{statusMessage}</p></div>}
       <div className="controls">
