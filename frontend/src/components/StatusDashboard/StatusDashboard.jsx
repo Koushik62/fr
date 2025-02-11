@@ -13,6 +13,28 @@ const StatusDashboard = () => {
 
   const formatDate = (date) => date.toISOString().split("T")[0];
 
+  
+  const fetchTweetReplies = useCallback(async (date) => {
+    const formattedDate = formatDate(date);
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/tweetreplies`);
+      if (!response.ok) throw new Error("Failed to fetch tweet replies");
+      const data = await response.json();
+      
+      // Filter replies that match the selected date
+      const filteredReplies = data.filter((reply) => reply.timestamp.includes(formattedDate));
+      const responses = filteredReplies.length;  // Number of replies for the selected date
+  
+      setMetrics((prevMetrics) => ({
+        ...prevMetrics,
+        responses,  // Update People Responses count
+      }));
+    } catch (err) {
+      console.error(err.message);
+    }
+  }, []);
+  
+
   const fetchTweets = useCallback(async (date) => {
     const formattedDate = formatDate(date);
     try {
@@ -54,7 +76,7 @@ const StatusDashboard = () => {
   useEffect(() => {
     fetchTweets(selectedDate);
     fetchStatus();
-  }, [selectedDate, fetchStatus, fetchTweets]);
+  }, [selectedDate, fetchStatus, fetchTweets, fetchTweetReplies]);
 
   const handleStart = async () => {
     try {
