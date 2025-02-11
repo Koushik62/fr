@@ -58,11 +58,7 @@ const StatusDashboard = () => {
 
   const handleStart = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ delay: parseInt(delay, 10) || 0 })
-      });
+      const response = await fetch(`${config.API_BASE_URL}/start`, { method: "GET" });
       const data = await response.json();
       if (response.ok) {
         setStatusMessage("Agent started successfully!");
@@ -91,7 +87,6 @@ const StatusDashboard = () => {
       setStatusMessage("An error occurred while stopping the agent.");
     }
   };
-
   const handleUpdateDelay = async () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/update-delay`, {
