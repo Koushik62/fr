@@ -6,12 +6,19 @@ import config from "../../config";
 
 const StatusDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [metrics, setMetrics] = useState({ fetched: 0, replied: 0, responses: 0 });
+  const [metrics, setMetrics] = useState({ fetched: 0, replied: 0});
+  const [replies, setReplies] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [delay, setDelay] = useState("");
 
-  const formatDate = (date) => date.toISOString().split("T")[0];
+  const formatDate = (date) => {
+    if (!date) {
+      console.error("Invalid date:", date);
+      return null; // Return null or handle appropriately
+    }
+    return date.toISOString().split("T")[0];
+  };
 
   
   const fetchTweetReplies = useCallback(async (date) => {
@@ -20,16 +27,18 @@ const StatusDashboard = () => {
       const response = await fetch(`${config.API_BASE_URL}/tweetreplies`);
       if (!response.ok) throw new Error("Failed to fetch tweet replies");
       const data = await response.json();
-      
+      console.log("dsd", data);
       // Filter replies that match the selected date
       const filteredReplies = data.filter((reply) => reply.timestamp.includes(formattedDate));
       const responses = filteredReplies.length;  // Number of replies for the selected date
-  
-      setMetrics((prevMetrics) => ({
-        ...prevMetrics,
-        responses,  // Update People Responses count
-      }));
+      setReplies(responses);
+      setMetrics.responses = responses;
+      // setMetrics((prevMetrics) => ({
+      //   ...prevMetrics,
+      //   responses,  // Update People Responses count
+      // }));
     } catch (err) {
+      
       console.error(err.message);
     }
   }, []);
@@ -76,6 +85,7 @@ const StatusDashboard = () => {
   useEffect(() => {
     fetchTweets(selectedDate);
     fetchStatus();
+    fetchTweetReplies(selectedDate);
   }, [selectedDate, fetchStatus, fetchTweets, fetchTweetReplies]);
 
   const handleStart = async () => {
@@ -150,7 +160,7 @@ const StatusDashboard = () => {
       <div className="metrics">
         <div className="metric-item"><h3>{metrics.fetched}</h3><p>Tweets Fetched</p></div>
         <div className="metric-item"><h3>{metrics.replied}</h3><p>Tweets Replied</p></div>
-        <div className="metric-item"><h3>{metrics.responses}</h3><p>People Responses</p></div>
+        <div className="metric-item"><h3>{replies}</h3><p>People Responses</p></div>
       </div>
       <div className="time-input-container">
         <input
