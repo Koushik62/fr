@@ -27,12 +27,11 @@ const StatusDashboard = () => {
       const response = await fetch(`${config.API_BASE_URL}/tweetreplies`);
       if (!response.ok) throw new Error("Failed to fetch tweet replies");
       const data = await response.json();
-      console.log("dsd", data);
+      
       // Filter replies that match the selected date
       const filteredReplies = data.filter((reply) => reply.timestamp.includes(formattedDate));
       const responses = filteredReplies.length;  // Number of replies for the selected date
       setReplies(responses);
-      setMetrics.responses = responses;
       // setMetrics((prevMetrics) => ({
       //   ...prevMetrics,
       //   responses,  // Update People Responses count

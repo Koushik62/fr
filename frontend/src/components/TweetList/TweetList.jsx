@@ -71,7 +71,7 @@ const TweetList = () => {
       if (!response.ok) throw new Error("Failed to fetch tweets");
       const data = await response.json();
       setTweets(data);
-      console.log(data);
+
     } catch (err) {
       setError(err.message);
     } finally {
