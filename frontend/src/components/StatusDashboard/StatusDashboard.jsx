@@ -8,6 +8,7 @@ const StatusDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [metrics, setMetrics] = useState({ fetched: 0, replied: 0});
   const [replies, setReplies] = useState(0);
+  const [totalLimit, setTotalLimit] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [delay, setDelay] = useState("");
@@ -32,16 +33,12 @@ const StatusDashboard = () => {
       const filteredReplies = data.filter((reply) => reply.timestamp.includes(formattedDate));
       const responses = filteredReplies.length;  // Number of replies for the selected date
       setReplies(responses);
-      // setMetrics((prevMetrics) => ({
-      //   ...prevMetrics,
-      //   responses,  // Update People Responses count
-      // }));
-    } catch (err) {
+   
       
+    } catch (err) {
       console.error(err.message);
     }
   }, []);
-  
 
   const fetchTweets = useCallback(async (date) => {
     const formattedDate = formatDate(date);
@@ -49,11 +46,17 @@ const StatusDashboard = () => {
       const response = await fetch(`${config.API_BASE_URL}/tweets`);
       if (!response.ok) throw new Error("Failed to fetch tweets");
       const data = await response.json();
+    
       const filteredTweets = data.filter((tweet) => tweet.timestamp.includes(formattedDate));
       const fetched = filteredTweets.length;
       const replied = filteredTweets.filter((tweet) => tweet.status === "replied").length;
       const responses = fetched - replied;
+      
+      // Filter tweets with replied_timestamp matching selected date
+      const repliedTweets = data.filter((tweet) => tweet.replied_timestamp && tweet.replied_timestamp.includes(formattedDate)).length;
+      
       setMetrics({ fetched, replied, responses });
+      setTotalLimit(repliedTweets);
     } catch (err) {
       console.error(err.message);
     }
@@ -139,6 +142,22 @@ const StatusDashboard = () => {
       setStatusMessage("An error occurred while updating the delay.");
     }
   };
+
+  const handleClearLogs = async () => {
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/clear-logs`, { method: "POST" });
+      const data = await response.json();
+      if (response.ok) {
+        setStatusMessage("Logs cleared successfully!");
+      } else {
+        setStatusMessage(`Failed to clear logs: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error clearing logs:", error);
+      setStatusMessage("An error occurred while clearing logs.");
+    }
+  };
+
   
   return (
     <div className="status-dashboard">
@@ -158,8 +177,9 @@ const StatusDashboard = () => {
       </p>
       <div className="metrics">
         <div className="metric-item"><h3>{metrics.fetched}</h3><p>Tweets Fetched</p></div>
-        <div className="metric-item"><h3>{metrics.replied}</h3><p>Tweets Replied</p></div>
-        <div className="metric-item"><h3>{replies}</h3><p>People Responses</p></div>
+        <div className="metric-item"><h3>{replies}</h3><p>Metions Replied</p></div>
+        <div className="metric-item"><h3>{totalLimit+replies}</h3><p>Total Replied</p></div>
+        
       </div>
       <div className="time-input-container">
         <input
@@ -175,6 +195,9 @@ const StatusDashboard = () => {
       <div className="controls">
         <button className="start-btn" onClick={handleStart} disabled={isRunning}>Start Agent</button>
         <button className="stop-btn" onClick={handleStop} disabled={!isRunning}>Stop Agent</button>
+      </div>
+      <div className="controls">
+        <button className="clear-logs-btn" onClick={handleClearLogs}>Clear Logs</button>
       </div>
     </div>
   );

@@ -136,3 +136,6 @@
   font-size: 16px;
   cursor: pointer;
 }
+.clear-logs-btn:hover {
+  background-color: #d43f3f;
+}
