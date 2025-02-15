@@ -53,7 +53,7 @@ const StatusDashboard = () => {
       const responses = fetched - replied;
       
       // Filter tweets with replied_timestamp matching selected date
-      const repliedTweets = data.filter((tweet) => tweet.replied_timestamp && tweet.replied_timestamp.includes(formattedDate)).length;
+      const repliedTweets = data.filter((tweet) => tweet.updated_at && tweet.updated_at.includes(formattedDate)).length;
       
       setMetrics({ fetched, replied, responses });
       setTotalLimit(repliedTweets);
