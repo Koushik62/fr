@@ -125,13 +125,35 @@ const TweetList = () => {
   // Build an array of page numbers
   const getPageNumbers = () => {
     const pageNumbers = [];
-    // Display up to 5 page buttons then show '...' and last page if needed
-    for (let i = 1; i <= totalPages && i <= 5; i++) {
-      pageNumbers.push(i);
+    
+    // Always show first page
+    pageNumbers.push(1);
+    
+    // If current page is far from the beginning, add ellipsis
+    if (currentPage > 3) {
+      pageNumbers.push('...');
     }
-    if (totalPages > 5) {
-      pageNumbers.push('...', totalPages);
+    
+    // Show pages around current page
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      if (i > 1 && i < totalPages) {
+        pageNumbers.push(i);
+      }
     }
+    
+    // If current page is far from the end, add ellipsis
+    if (currentPage < totalPages - 2 && totalPages > 3) {
+      pageNumbers.push('...');
+    }
+    
+    // Always show last page if there's more than one page
+    if (totalPages > 1) {
+      pageNumbers.push(totalPages);
+    }
+    
     return pageNumbers;
   };
 

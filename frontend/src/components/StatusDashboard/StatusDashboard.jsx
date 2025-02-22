@@ -32,6 +32,7 @@ const StatusDashboard = () => {
       // Filter replies that match the selected date
       const filteredReplies = data.filter((reply) => reply.timestamp.includes(formattedDate));
       const responses = filteredReplies.length;  // Number of replies for the selected date
+      
       setReplies(responses);
    
       
@@ -46,12 +47,13 @@ const StatusDashboard = () => {
       const response = await fetch(`${config.API_BASE_URL}/tweets`);
       if (!response.ok) throw new Error("Failed to fetch tweets");
       const data = await response.json();
-    
+      
       const filteredTweets = data.filter((tweet) => tweet.timestamp.includes(formattedDate));
+      
       const fetched = filteredTweets.length;
       const replied = filteredTweets.filter((tweet) => tweet.status === "replied").length;
       const responses = fetched - replied;
-      
+     
       // Filter tweets with replied_timestamp matching selected date
       const repliedTweets = data.filter((tweet) => tweet.updated_at && tweet.updated_at.includes(formattedDate)).length;
       
